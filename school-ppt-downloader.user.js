@@ -28,6 +28,7 @@
     whitelist: "pptWhitelist",
     mode: "pptMode",
     deepMode: "pptDeepMode",
+    hotkey: "pptHotkey",
   };
 
   const extPattern = /\.(pptx?|ppsx?|potx?|pdf)(\?|#|$)/i;
@@ -198,14 +199,16 @@
     return panel;
   }
 
+  function togglePanel() {
+    const panel = document.getElementById("ppt-downloader-panel");
+    panel?.classList.toggle("hidden");
+  }
+
   function createButton() {
     const btn = document.createElement("button");
     btn.id = "ppt-downloader-btn";
     btn.textContent = "P";
-    btn.addEventListener("click", () => {
-      const panel = document.getElementById("ppt-downloader-panel");
-      panel?.classList.toggle("hidden");
-    });
+    btn.addEventListener("click", () => togglePanel());
     document.body.appendChild(btn);
   }
 
@@ -384,6 +387,59 @@
     GM_setValue(storageKeys.deepMode, next);
   }
 
+  function getHotkey() {
+    return GM_getValue(storageKeys.hotkey, "alt+u");
+  }
+
+  function setHotkey(next) {
+    GM_setValue(storageKeys.hotkey, next);
+  }
+
+  function normalizeHotkey(text) {
+    if (!text) return null;
+    const raw = text.toLowerCase().replace(/\s+/g, "");
+    const parts = raw.split("+");
+    const key = parts.pop();
+    if (!key) return null;
+    const mods = new Set(parts.filter(Boolean));
+    return {
+      alt: mods.has("alt"),
+      ctrl: mods.has("ctrl") || mods.has("control"),
+      shift: mods.has("shift"),
+      meta: mods.has("meta") || mods.has("cmd") || mods.has("command"),
+      key,
+      text: `${mods.size ? Array.from(mods).join("+") + "+" : ""}${key}`,
+    };
+  }
+
+  function registerHotkey() {
+    const config = normalizeHotkey(getHotkey());
+    if (!config) return;
+    document.addEventListener("keydown", (event) => {
+      if (event.repeat) return;
+      if (event.altKey !== config.alt) return;
+      if (event.ctrlKey !== config.ctrl) return;
+      if (event.shiftKey !== config.shift) return;
+      if (event.metaKey !== config.meta) return;
+      if (event.key.toLowerCase() !== config.key) return;
+      event.preventDefault();
+      togglePanel();
+    });
+  }
+
+  function setHotkeyPrompt() {
+    const current = getHotkey();
+    const input = window.prompt("设置快捷键（例如 alt+u / ctrl+shift+k）", current);
+    if (!input) return;
+    const config = normalizeHotkey(input);
+    if (!config) {
+      toast("快捷键格式不正确");
+      return;
+    }
+    setHotkey(config.text);
+    toast(`已设置快捷键：${config.text}`);
+  }
+
   function enableDeepMode() {
     if (state.deepModeEnabled) return;
     state.deepModeEnabled = true;
@@ -508,12 +564,14 @@
       GM_registerMenuCommand("仅在此站点启用", enableOnlyThisHost);
       GM_registerMenuCommand("启用所有网站", enableAll);
       GM_registerMenuCommand("切换深度抓取", toggleDeepMode);
+      GM_registerMenuCommand("设置快捷键", setHotkeyPrompt);
       return;
     }
 
     addStyles();
     createPanel();
     createButton();
+    registerHotkey();
 
     if (isDeepMode()) enableDeepMode();
 
@@ -525,6 +583,7 @@
     GM_registerMenuCommand("移除此站点", disableThisHost);
     GM_registerMenuCommand("启用所有网站", enableAll);
     GM_registerMenuCommand("切换深度抓取", toggleDeepMode);
+    GM_registerMenuCommand("设置快捷键", setHotkeyPrompt);
   }
 
   init();
