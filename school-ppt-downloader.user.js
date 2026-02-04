@@ -31,8 +31,8 @@
     hotkey: "pptHotkey",
   };
 
-  const extPattern = /\.(pptx?|ppsx?|potx?|pdf)(\?|#|$)/i;
-  const urlPattern = /https?:\/\/[^\s"'<>]+?\.(pptx?|ppsx?|potx?|pdf)(\?[^\s"'<>]*)?/gi;
+  const extPattern = /\.(pptx?|ppsx?|potx?|pdf|zip|docx?|xlsx?|rar|7z)(\?|#|$)/i;
+  const urlPattern = /https?:\/\/[^\s"'<>]+?\.(pptx?|ppsx?|potx?|pdf|zip|docx?|xlsx?|rar|7z)(\?[^\s"'<>]*)?/gi;
 
   function normalizeUrl(raw) {
     try {
@@ -176,13 +176,25 @@
       <div class="ppt-header">
         <div class="ppt-title">PPT 下载</div>
         <div class="ppt-actions">
-          <button data-action="settings">设置</button>
+          <button data-action="settings" aria-label="设置" title="设置">⚙</button>
           <button data-action="scan">扫描</button>
           <button data-action="copy">复制</button>
           <button data-action="close">收起</button>
         </div>
       </div>
       <div class="ppt-body">
+        <div class="ppt-settings hidden">
+          <div class="ppt-settings-title">设置</div>
+          <div class="ppt-settings-actions">
+            <button data-action="toggle-deep">切换深度抓取</button>
+            <button data-action="site-only">仅在此站点启用</button>
+            <button data-action="site-all">启用所有网站</button>
+            <button data-action="show-whitelist">查看白名单</button>
+            <button data-action="clear-whitelist">清空白名单</button>
+            <button data-action="set-hotkey">设置快捷键</button>
+          </div>
+          <div class="ppt-warning">注意：深度抓取与全站运行更耗资源，用完记得关闭或切回仅站点启用。</div>
+        </div>
         <div class="ppt-empty">尚未发现PPT链接</div>
         <ul class="ppt-list"></ul>
       </div>
@@ -192,7 +204,15 @@
     panel.addEventListener("click", (event) => {
       const action = event.target?.getAttribute("data-action");
       if (!action) return;
-      if (action === "settings") setHotkeyPrompt();
+      if (action === "settings") {
+        panel.querySelector(".ppt-settings")?.classList.toggle("hidden");
+      }
+      if (action === "toggle-deep") toggleDeepMode();
+      if (action === "site-only") enableOnlyThisHost();
+      if (action === "site-all") enableAll();
+      if (action === "show-whitelist") showWhitelist();
+      if (action === "clear-whitelist") clearWhitelist();
+      if (action === "set-hotkey") setHotkeyPrompt();
       if (action === "scan") scanOnce();
       if (action === "copy") copyAll();
       if (action === "close") panel.classList.add("hidden");
@@ -331,6 +351,41 @@
       #ppt-downloader-panel .ppt-body {
         padding: 10px 12px;
         overflow: auto;
+      }
+      #ppt-downloader-panel .ppt-settings {
+        margin-bottom: 10px;
+        padding: 10px;
+        border: 1px dashed #d0d7de;
+        border-radius: 10px;
+        background: #fafbfc;
+      }
+      #ppt-downloader-panel .ppt-settings.hidden {
+        display: none;
+      }
+      #ppt-downloader-panel .ppt-settings-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #1f2328;
+        margin-bottom: 8px;
+      }
+      #ppt-downloader-panel .ppt-settings-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      #ppt-downloader-panel .ppt-settings-actions button {
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: 1px solid #d0d7de;
+        background: #fff;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      #ppt-downloader-panel .ppt-warning {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #b42318;
+        line-height: 1.4;
       }
       #ppt-downloader-panel .ppt-empty {
         color: #6a737d;
