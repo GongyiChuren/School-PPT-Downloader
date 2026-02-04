@@ -176,6 +176,7 @@
       <div class="ppt-header">
         <div class="ppt-title">PPT 下载</div>
         <div class="ppt-actions">
+          <button data-action="settings">设置</button>
           <button data-action="scan">扫描</button>
           <button data-action="copy">复制</button>
           <button data-action="close">收起</button>
@@ -191,6 +192,7 @@
     panel.addEventListener("click", (event) => {
       const action = event.target?.getAttribute("data-action");
       if (!action) return;
+      if (action === "settings") setHotkeyPrompt();
       if (action === "scan") scanOnce();
       if (action === "copy") copyAll();
       if (action === "close") panel.classList.add("hidden");
@@ -202,6 +204,20 @@
   function togglePanel() {
     const panel = document.getElementById("ppt-downloader-panel");
     panel?.classList.toggle("hidden");
+  }
+
+  function toggleUiVisibility() {
+    const btn = document.getElementById("ppt-downloader-btn");
+    const panel = document.getElementById("ppt-downloader-panel");
+    if (!btn || !panel) return;
+    const isHidden = btn.classList.contains("hidden");
+    if (isHidden) {
+      btn.classList.remove("hidden");
+      panel.classList.add("hidden");
+      return;
+    }
+    panel.classList.add("hidden");
+    btn.classList.add("hidden");
   }
 
   function createButton() {
@@ -266,6 +282,9 @@
         font-weight: 600;
         cursor: pointer;
         box-shadow: 0 10px 24px rgba(31, 111, 235, 0.35);
+      }
+      #ppt-downloader-btn.hidden {
+        display: none;
       }
       #ppt-downloader-panel {
         position: fixed;
@@ -423,7 +442,7 @@
       if (event.metaKey !== config.meta) return;
       if (event.key.toLowerCase() !== config.key) return;
       event.preventDefault();
-      togglePanel();
+      toggleUiVisibility();
     });
   }
 
